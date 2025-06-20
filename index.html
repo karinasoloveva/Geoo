@@ -59,16 +59,7 @@
       }).addTo(map);
     }
 
-    window.onload = function() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const lat = pos.coords.latitude;
-            const lon = pos.coords.longitude;
-            initMap(lat, lon);
-            userMarker = L.marker([lat, lon]).addTo(map)
-              .bindPopup('Ваше местоположение')
-              .openPopup();
+    
           },
           (err) => {
             alert('Ошибка геолокации: ' + err.message);
