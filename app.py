@@ -28,8 +28,7 @@ HTML = """
           maxZoom: 19,
         }).addTo(map);
 
-        L.marker([lat, lon]).addTo(map)
-          .bindPopup('Вы здесь')
+        
           .openPopup();
       }, function(error) {
         alert('Ошибка получения геолокации: ' + error.message);
