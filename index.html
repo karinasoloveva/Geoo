@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Геолокация и ввод города</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    #map {
+      height: 400px;
+      width: 100%;
+      margin-top: 20px;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 16px;
+      margin: 5px 0;
+      display: block;
+    }
+    .info {
+      margin-top: 15px;
+      background-color: #f1f1f1;
+      padding: 10px;
+      border-left: 4px solid #2196F3;
+    }
+  </style>
+</head>
+<body>
+  <h2>Геолокация и выбор города</h2>
+
+  <div class="info">
+    📍 <strong>Важно:</strong> ваше местоположение может быть определено неточно — особенно на компьютере без GPS.<br>
+    👉 Если вы не в том городе, который показывает карта, просто введите нужный город вручную ниже.
+  </div>
+
+  <label for="nameInput">Ваше имя:</label>
+  <input type="text" id="nameInput" placeholder="Введите ваше имя" />
+
+  <label for="cityInput">Город:</label>
+  <input type="text" id="cityInput" placeholder="Введите название города" />
+
+  <button id="showCityBtn">Показать город</button>
+
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+  <script>
+    let map;
+    let userMarker;
+    let cityMarker;
+
+    function initMap(lat, lon) {
+      map = L.map('map').setView([lat, lon], 11);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+      }).addTo(map);
+    }
+
+    window.onload = function() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            initMap(lat, lon);
+            userMarker = L.marker([lat, lon]).addTo(map)
+              .bindPopup('Ваше местоположение')
+              .openPopup();
+          },
+          (err) => {
+            alert('Ошибка геолокации: ' + err.message);
+            initMap(50.4501, 30.5234); // Киев по умолчанию
+          }
+        );
+      } else {
+        alert('Геолокация не поддерживается вашим браузером');
+        initMap(50.4501, 30.5234);
+      }
+    };
+
+    document.getElementById('showCityBtn').addEventListener('click', async () => {
+      const name = document.getElementById('nameInput').value.trim();
+      const city = document.getElementById('cityInput').value.trim();
+
+      if (!name) {
+        alert('Введите ваше имя');
+        return;
+      }
+      if (!city) {
+        alert('Введите название города');
+        return;
+      }
+
+      try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city + ', Украина')}`);
+        const results = await response.json();
+
+        if (results.length === 0) {
+          alert('Город не найден');
+          return;
+        }
+
+        const lat = parseFloat(results[0].lat);
+        const lon = parseFloat(results[0].lon);
+
+        if (cityMarker) {
+          map.removeLayer(cityMarker);
+        }
+
+        cityMarker = L.marker([lat, lon]).addTo(map)
+          .bindPopup(`${name} находится в городе: ${city}`)
+          .openPopup();
+
+        map.setView([lat, lon], 12);
+
+      } catch (error) {
+        alert('Ошибка при поиске города');
+        console.error(error);
+      }
+    });
+  </script>
+</body>
+</html>
